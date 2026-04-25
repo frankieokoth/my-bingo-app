@@ -1,21 +1,94 @@
+
 @import 'tailwindcss';
 
 @theme {
-  --color-accent: #2563eb;
-  --color-accent-light: #3b82f6;
-  --color-marked: #dcfce7;
-  --color-marked-border: #22c55e;
-  --color-bingo: #fbbf24;
+  --color-bg: #0f1021;
+  --color-bg-alt: #1a1b2e;
+  --color-accent: #00fff7;
+  --color-accent-light: #f500f5;
+  --color-marked: #ffea00;
+  --color-marked-border: #00fff7;
+  --color-bingo: #ff00ea;
+  --color-glow: #00fff7cc;
+  --color-glow-alt: #f500f5cc;
+  --font-cyber: 'Orbitron', 'Share Tech Mono', 'Montserrat', monospace;
 }
 
 html,
 body,
 #root {
   height: 100%;
+  background: linear-gradient(135deg, #0f1021 60%, #1a1b2e 100%);
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-cyber);
+  color: var(--color-accent);
+  background: linear-gradient(135deg, #0f1021 60%, #1a1b2e 100%);
+  min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
+  text-shadow: 0 0 8px var(--color-glow), 0 0 2px var(--color-glow-alt);
+}
+
+.cyber-glow {
+  box-shadow: 0 0 12px 2px var(--color-glow), 0 0 32px 8px var(--color-glow-alt);
+  border: 2px solid var(--color-accent);
+  background: rgba(15,16,33,0.85);
+  color: var(--color-accent);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.cyber-btn {
+  font-family: var(--font-cyber);
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-light));
+  color: #0f1021;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 0 16px 2px var(--color-glow-alt);
+  text-shadow: none;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  transition: filter 0.2s, box-shadow 0.2s;
+}
+.cyber-btn:hover, .cyber-btn:focus {
+  filter: brightness(1.2) drop-shadow(0 0 8px var(--color-glow));
+  box-shadow: 0 0 32px 8px var(--color-glow);
+}
+
+.cyber-board {
+  background: repeating-linear-gradient(135deg, #1a1b2e 0 2px, transparent 2px 32px);
+  border-radius: 18px;
+  box-shadow: 0 0 32px 4px var(--color-glow-alt);
+  padding: 12px;
+}
+
+.cyber-square {
+  border: 2px solid var(--color-accent-light);
+  background: rgba(0,255,247,0.08);
+  color: var(--color-accent);
+  font-family: var(--font-cyber);
+  font-size: 1rem;
+  box-shadow: 0 0 8px 2px var(--color-glow-alt);
+  transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.cyber-square[aria-pressed="true"] {
+  background: linear-gradient(90deg, var(--color-marked), var(--color-bingo));
+  color: #0f1021;
+  border-color: var(--color-bingo);
+  box-shadow: 0 0 24px 6px var(--color-bingo);
+}
+.cyber-square.winning {
+  border-color: var(--color-bingo);
+  box-shadow: 0 0 32px 8px var(--color-bingo);
+  animation: cyber-win 1s infinite alternate;
+}
+@keyframes cyber-win {
+  0% { filter: brightness(1.2); }
+  100% { filter: brightness(2) drop-shadow(0 0 16px var(--color-bingo)); }
+}
+
+@keyframes cyber-modal-enter {
+  0% { opacity: 0; transform: scale(0.7) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
