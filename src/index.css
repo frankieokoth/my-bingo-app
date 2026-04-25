@@ -19,6 +19,7 @@ body,
 #root {
   height: 100%;
   background: linear-gradient(135deg, #0f1021 60%, #1a1b2e 100%);
+  position: relative;
 }
 
 body {
@@ -29,6 +30,40 @@ body {
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
   text-shadow: 0 0 8px var(--color-glow), 0 0 2px var(--color-glow-alt);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 255, 247, 0.03) 3px,
+      rgba(0, 255, 247, 0.03) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 60px,
+      rgba(245, 0, 245, 0.04) 60px,
+      rgba(245, 0, 245, 0.04) 61px
+    );
+  animation: scanlines 8s linear infinite;
+}
+
+@keyframes scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+#root {
+  position: relative;
+  z-index: 1;
 }
 
 .cyber-glow {

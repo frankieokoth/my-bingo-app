@@ -6,6 +6,7 @@ import {
   checkBingo,
   getWinningSquareIds,
 } from '../utils/bingoLogic';
+import { playTap, playUntap, playBingo } from '../utils/sounds';
 
 export interface BingoGameState {
   gameState: GameState;
@@ -169,6 +170,15 @@ export function useBingoGame(): BingoGameState & BingoGameActions {
 
   const handleSquareClick = useCallback((squareId: number) => {
     setBoard((currentBoard) => {
+      const square = currentBoard.find(s => s.id === squareId);
+      if (square?.isFreeSpace) return currentBoard;
+
+      if (square?.isMarked) {
+        playUntap();
+      } else {
+        playTap();
+      }
+
       const newBoard = toggleSquare(currentBoard, squareId);
       
       // Check for bingo after toggling
@@ -176,6 +186,7 @@ export function useBingoGame(): BingoGameState & BingoGameActions {
       if (bingo && !winningLine) {
         // Schedule state updates to avoid synchronous setState in effect
         queueMicrotask(() => {
+          playBingo();
           setWinningLine(bingo);
           setGameState('bingo');
           setShowBingoModal(true);
