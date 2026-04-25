@@ -1,0 +1,26 @@
+{
+  "chat.promptFilesRecommendations": {
+    "setup": "resourceFilename == 'README.md'"
+  },
+  "chat.tools.terminal.enableAutoApprove": true,
+  "chat.tools.terminal.autoApprove": {
+    "npm run lint": true,
+    "npm run dev": true,
+    "npm run build": true,
+    "npm test": true,
+    "npm install": true,
+    "npx eslint": true
+  },
+  "github.copilot.chat.githubMcpServer.enabled": true,
+  "github.copilot.chat.githubMcpServer.toolsets": [
+    "repos,issues,pull_requests,code_search,copilot,web_search"
+  ],
+  "workbench.browser.enableChatTools": true,
+  "github.copilot.chat.agentDebugLog.enabled": true,
+  "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
+  "imageCarousel.explorerContextMenu.enabled": true,
+  "imageCarousel.chat.enabled": true,
+  "chat.customizationsMenu.enabled": true,
+  "chat.useCustomizationsInParentRepositories": true,
+  "chat.useCustomAgentHooks": true
+}

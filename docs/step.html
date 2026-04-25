@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LSC44NDPLQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-LSC44NDPLQ');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Code GitHub Copilot Agent Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="alternate" hreflang="en" href="https://copilot-dev-days.github.io/agent-lab-typescript/">
+    <link rel="alternate" hreflang="pt-BR" href="https://copilot-dev-days.github.io/agent-lab-typescript/pt_BR/">
+    <link rel="alternate" hreflang="es" href="https://copilot-dev-days.github.io/agent-lab-typescript/es/">
+    <link rel="alternate" hreflang="x-default" href="https://copilot-dev-days.github.io/agent-lab-typescript/">
+    <link rel="stylesheet" href="step.css">
+    <link rel="stylesheet" href="light-theme.css">
+    <script src="theme-toggle.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="header-brand">
+                <span>🎮</span>
+                <span class="header-title">VS Code Copilot Agent Lab</span>
+            </a>
+            <nav class="header-nav">
+                <div class="locale-picker" id="localePicker">
+                    <button type="button" class="locale-toggle" aria-haspopup="listbox" aria-expanded="false" aria-label="Select language">🌐</button>
+                    <ul role="listbox" aria-label="Language">
+                        <li role="option" data-locale="en" aria-selected="true" class="active">🇬🇧 English</li>
+                        <li role="option" data-locale="es" aria-selected="false">🇪🇸 Español</li>
+                        <li role="option" data-locale="pt-BR" aria-selected="false">🇧🇷 Português (Brasil)</li>
+                    </ul>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
+                <button class="nav-btn" id="prevBtn" disabled>← Previous</button>
+                <button class="nav-btn" id="nextBtn">Next →</button>
+            </nav>
+        </div>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Lab Parts</div>
+                <nav id="stepNav"></nav>
+            </div>
+        </aside>
+
+        <main class="main">
+            <article class="content">
+                <div id="markdown-content" class="markdown">
+                    <div class="loading">Loading content</div>
+                </div>
+                <nav class="nav-footer">
+                    <a href="#" class="nav-footer-btn disabled" id="prevLink">← Previous</a>
+                    <a href="#" class="nav-footer-btn" id="nextLink">Next →</a>
+                </nav>
+            </article>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script>
+        const steps = [
+            { id: 'guide', file: 'GUIDE.md', title: 'Quick Reference', number: '📚' },
+            { id: '00-overview', file: '00-overview.md', title: 'Overview & Checklist', number: '00' },
+            { id: '01-setup', file: '01-setup.md', title: 'Setup & Context Engineering', number: '01' },
+            { id: '02-design', file: '02-design.md', title: 'Design-First Frontend', number: '02' },
+            { id: '03-quiz-master', file: '03-quiz-master.md', title: 'Custom Quiz Master', number: '03' },
+            { id: '04-multi-agent', file: '04-multi-agent.md', title: 'Multi-Agent Development', number: '04' },
+            { id: '05-complete', file: '05-complete.md', title: '🎉 Complete!', number: '🎉' },
+        ];
+
+        function celebrate() {
+            const duration = 3000;
+            const end = Date.now() + duration;
+            const colors = ['#00f5ff', '#ff00ff', '#b366ff', '#00ff88', '#ffff00'];
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/copilot-dev-days/agent-lab-typescript/main/workshop/';
+        const CHECKBOX_STATE_KEY_PREFIX = 'workshop-checkboxes:';
+        const COPY_STATUS_RESET_DELAY = 2000;
+        const pendingCopyResetTimers = new Set();
+
+        function getCurrentStepId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('step') || '00-overview';
+        }
+
+        function getCurrentStepIndex() {
+            return steps.findIndex(s => s.id === getCurrentStepId());
+        }
+
+        function buildSidebar() {
+            const nav = document.getElementById('stepNav');
+            const currentId = getCurrentStepId();
+            nav.innerHTML = steps.map(step => `
+                <a href="?step=${step.id}" class="step-link ${step.id === currentId ? 'active' : ''}">
+                    <span class="step-number">${step.number}</span>
+                    <span>${step.title}</span>
+                </a>
+            `).join('');
+        }
+
+        function updateNavigation() {
+            const idx = getCurrentStepIndex();
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const prevLink = document.getElementById('prevLink');
+            const nextLink = document.getElementById('nextLink');
+
+            prevBtn.disabled = idx <= 0;
+            nextBtn.disabled = idx >= steps.length - 1;
+            prevBtn.onclick = () => idx > 0 && (window.location.search = `?step=${steps[idx - 1].id}`);
+            nextBtn.onclick = () => idx < steps.length - 1 && (window.location.search = `?step=${steps[idx + 1].id}`);
+
+            if (idx > 0) {
+                prevLink.href = `?step=${steps[idx - 1].id}`;
+                prevLink.textContent = `← ${steps[idx - 1].title}`;
+                prevLink.classList.remove('disabled');
+            } else {
+                prevLink.classList.add('disabled');
+                prevLink.textContent = '← Previous';
+            }
+
+            if (idx < steps.length - 1) {
+                nextLink.href = `?step=${steps[idx + 1].id}`;
+                nextLink.textContent = `${steps[idx + 1].title} →`;
+                nextLink.classList.remove('disabled');
+            } else {
+                nextLink.classList.add('disabled');
+                nextLink.textContent = 'Next →';
+            }
+        }
+
+        function processMarkdown(md) {
+            // Remove header/footer nav lines
+            md = md.replace(/\[📚 Lab Guide\][^\n]+\n+---/g, '');
+            md = md.replace(/\[📚 Lab Guide\][^\n]+/g, '');
+            md = md.replace(/\[🎮 Live Demo\][^\n]+\n+---/g, '');
+            md = md.replace(/\[🎮 Live Demo\][^\n]+/g, '');
+            md = md.replace(/\[← README\][^\n]+/g, '');
+            md = md.replace(/\[← Overview\][^\n]+/g, '');
+            md = md.replace(/\[← Part \d+\][^\n]+/g, '');
+            md = md.replace(/👉 \*\*\[Continue to[^\n]+/g, '');
+            md = md.replace(/👉 \*\*\[Start with[^\n]+/g, '');
+
+            // Convert relative game link to absolute
+            md = md.replace(/\]\(\.\.\/game\/\)/g, '](game/)');
+
+            // Convert internal markdown links to step viewer links
+            md = md.replace(/\]\((\d+)-([^)]+)\.md\)/g, '](step.html?step=$1-$2)');
+            md = md.replace(/\]\(GUIDE\.md\)/g, '](step.html?step=guide)');
+
+            // Handle GitHub-style alerts
+            md = md.replace(/>\s*💡\s*\*\*Tip:\*\*/gi, '> **💡 Tip**');
+            md = md.replace(/>\s*💡\s*\*\*(Optional)[,:]\*\*/gi, '> **💡 $1**');
+            md = md.replace(/>\s*💡\s*\*\*(Think about)[,:]\*\*/gi, '> **💡 $1**');
+
+            // Clean up multiple consecutive horizontal rules
+            md = md.replace(/---\s*\n\s*---/g, '---');
+
+            return md;
+        }
+
+        function getCheckboxStorageKey(stepId) {
+            return `${CHECKBOX_STATE_KEY_PREFIX}${stepId}`;
+        }
+
+        function setupInteractiveCheckboxes(stepId) {
+            const container = document.getElementById('markdown-content');
+            if (!container) return;
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            if (!checkboxes.length) return;
+
+            const storageKey = getCheckboxStorageKey(stepId);
+            let checkedIndexes = [];
+
+            try {
+                checkedIndexes = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                if (!Array.isArray(checkedIndexes)) checkedIndexes = [];
+            } catch {
+                checkedIndexes = [];
+            }
+
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.disabled = false;
+                checkbox.checked = checkedIndexes.includes(index) || checkbox.checked;
+                checkbox.setAttribute('aria-label', `Checklist item ${index + 1}`);
+
+                checkbox.addEventListener('change', () => {
+                    const updated = Array.from(checkboxes)
+                        .reduce((acc, cb, i) => {
+                            if (cb.checked) acc.push(i);
+                            return acc;
+                        }, []);
+                    localStorage.setItem(storageKey, JSON.stringify(updated));
+                });
+            });
+        }
+
+        async function copyCodeToClipboard(text) {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+                return;
+            }
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            // Keep the deprecated fallback for older browsers that lack navigator.clipboard.
+            const copied = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            if (!copied) throw new Error('Fallback copy failed');
+        }
+
+        function setupCodeBlockCopyButtons() {
+            const container = document.getElementById('markdown-content');
+            if (!container) return;
+            const codeBlocks = container.querySelectorAll('pre');
+
+            codeBlocks.forEach((pre) => {
+                const code = pre.querySelector('code');
+                const codeText = code?.textContent?.trim();
+                if (!codeText) return;
+
+                const copyButton = document.createElement('button');
+                copyButton.type = 'button';
+                copyButton.className = 'code-copy-btn';
+                copyButton.textContent = 'Copy';
+                copyButton.setAttribute('aria-label', 'Copy code');
+
+                const liveRegion = document.createElement('span');
+                liveRegion.className = 'sr-only';
+                liveRegion.setAttribute('aria-live', 'polite');
+                let resetTimer = null;
+
+                const resetButtonState = () => {
+                    copyButton.textContent = 'Copy';
+                    copyButton.dataset.state = 'idle';
+                    liveRegion.textContent = '';
+                };
+
+                copyButton.addEventListener('click', async () => {
+                    if (resetTimer) {
+                        clearTimeout(resetTimer);
+                        pendingCopyResetTimers.delete(resetTimer);
+                    }
+
+                    try {
+                        await copyCodeToClipboard(codeText);
+                        copyButton.textContent = 'Copied!';
+                        copyButton.dataset.state = 'copied';
+                        liveRegion.textContent = 'Code copied to clipboard';
+                    } catch {
+                        copyButton.textContent = 'Failed';
+                        copyButton.dataset.state = 'error';
+                        liveRegion.textContent = 'Unable to copy code';
+                    }
+
+                    resetTimer = setTimeout(() => {
+                        pendingCopyResetTimers.delete(resetTimer);
+                        resetTimer = null;
+                        resetButtonState();
+                    }, COPY_STATUS_RESET_DELAY);
+                    pendingCopyResetTimers.add(resetTimer);
+                });
+
+                pre.append(copyButton, liveRegion);
+            });
+        }
+
+        async function loadContent() {
+            const idx = getCurrentStepIndex();
+            if (idx === -1) {
+                document.getElementById('markdown-content').innerHTML = '<p>Step not found. <a href="?step=00-overview">Go to Overview</a></p>';
+                return;
+            }
+
+            const step = steps[idx];
+            document.title = `${step.title} | VS Code Copilot Agent Lab`;
+
+            try {
+                pendingCopyResetTimers.forEach(timer => clearTimeout(timer));
+                pendingCopyResetTimers.clear();
+
+                const response = await fetch(`${GITHUB_RAW_BASE}${step.file}`);
+                if (!response.ok) throw new Error('Failed to load');
+
+                let md = await response.text();
+                md = processMarkdown(md);
+
+                // Fix relative image paths to resolve against the markdown file's directory
+                const stepDir = step.file.substring(0, step.file.lastIndexOf('/') + 1);
+                md = md.replace(/!\[([^\]]*)\]\((?!https?:\/\/|\/\/)([^)]+)\)/g, (match, alt, path) => {
+                    const cleanPath = path.replace(/^\.\//, '');
+                    return `![${alt}](${GITHUB_RAW_BASE}${stepDir}${cleanPath})`;
+                });
+
+                marked.setOptions({ breaks: true, gfm: true });
+                document.getElementById('markdown-content').innerHTML = marked.parse(md);
+                setupInteractiveCheckboxes(step.id);
+                setupCodeBlockCopyButtons();
+
+                if (step.id === '05-complete') {
+                    setTimeout(celebrate, 500);
+                }
+            } catch (error) {
+                document.getElementById('markdown-content').innerHTML = `
+                    <h1>Error Loading Content</h1>
+                    <p>Could not load ${step.file}. Please check your internet connection.</p>
+                    <p><a href="index.html">Return to home</a></p>
+                `;
+            }
+        }
+
+        buildSidebar();
+        updateNavigation();
+        loadContent();
+
+        document.addEventListener('keydown', (e) => {
+            const idx = getCurrentStepIndex();
+            if (e.key === 'ArrowLeft' && idx > 0) {
+                window.location.search = `?step=${steps[idx - 1].id}`;
+            } else if (e.key === 'ArrowRight' && idx < steps.length - 1) {
+                window.location.search = `?step=${steps[idx + 1].id}`;
+            }
+        });
+    </script>
+    <script>
+    (function(){
+      var match=location.pathname.match(/\/(pt_BR|es)\//);
+      var locale=match?match[1]:'en';
+      var picker=document.getElementById('localePicker');
+      if(!picker)return;
+      var btn=picker.querySelector('.locale-toggle'),list=picker.querySelector('ul');
+      list.querySelectorAll('li').forEach(function(li){
+        var l=li.dataset.locale==='pt-BR'?'pt_BR':li.dataset.locale;
+        if(l===locale){li.classList.add('active');li.setAttribute('aria-selected','true');}
+        else{li.classList.remove('active');li.setAttribute('aria-selected','false');}
+      });
+      function open(){list.style.display='block';btn.setAttribute('aria-expanded','true');}
+      function close(){list.style.display='none';btn.setAttribute('aria-expanded','false');}
+      btn.addEventListener('click',function(e){e.stopPropagation();list.style.display==='block'?close():open();});
+      document.addEventListener('click',close);
+      document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+      list.querySelectorAll('li').forEach(function(li){
+        li.addEventListener('click',function(e){
+          e.stopPropagation();
+          var t=li.dataset.locale==='pt-BR'?'pt_BR':li.dataset.locale;
+          if(t===locale){close();return;}
+          var p=location.pathname;
+          if(locale!=='en')p=p.replace(new RegExp('/'+locale+'/'),'/');
+          if(t!=='en'){var ls=p.lastIndexOf('/');p=p.substring(0,ls+1)+t+p.substring(ls);}
+          localStorage.setItem('preferred-locale',t);
+          window.location.href=p+location.search;
+        });
+      });
+    })();
+    </script>
+</body>
+</html>
