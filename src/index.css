@@ -12,6 +12,7 @@
   --color-glow: #00fff7cc;
   --color-glow-alt: #f500f5cc;
   --font-cyber: 'Orbitron', 'Share Tech Mono', 'Montserrat', monospace;
+  --font-cyber-body: 'Share Tech Mono', 'Orbitron', monospace;
 }
 
 html,
@@ -95,7 +96,99 @@ body::before {
   background: repeating-linear-gradient(135deg, #1a1b2e 0 2px, transparent 2px 32px);
   border-radius: 18px;
   box-shadow: 0 0 32px 4px var(--color-glow-alt);
-  padding: 12px;
+  padding: 10px;
+}
+
+/* Bingo square base */
+.cyber-square {
+  font-family: var(--font-cyber-body);
+  font-size: 0.65rem;
+  background: rgba(15, 16, 33, 0.92);
+  border: 1.5px solid rgba(0, 255, 247, 0.35);
+  border-radius: 8px;
+  color: var(--color-accent);
+  text-shadow: 0 0 6px var(--color-glow);
+  cursor: pointer;
+  box-shadow: inset 0 0 12px rgba(0, 255, 247, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  min-height: 3.5rem;
+}
+.cyber-square:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 14px 2px var(--color-glow), inset 0 0 18px rgba(0, 255, 247, 0.1);
+  transform: scale(1.04);
+}
+.cyber-square:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* Marked square */
+.cyber-square[aria-pressed='true'] {
+  background: linear-gradient(135deg, rgba(255, 234, 0, 0.15) 0%, rgba(0, 255, 247, 0.12) 100%);
+  border-color: var(--color-marked-border);
+  box-shadow: 0 0 16px 3px rgba(0, 255, 247, 0.35), inset 0 0 20px rgba(255, 234, 0, 0.08);
+  color: var(--color-marked);
+  text-shadow: 0 0 8px rgba(255, 234, 0, 0.6);
+}
+
+/* Winning square */
+.cyber-square.winning {
+  background: linear-gradient(135deg, rgba(255, 0, 234, 0.22) 0%, rgba(0, 255, 247, 0.18) 100%);
+  border-color: var(--color-bingo);
+  box-shadow: 0 0 20px 5px rgba(255, 0, 234, 0.5), 0 0 40px 10px rgba(0, 255, 247, 0.2);
+  color: #fff;
+  text-shadow: 0 0 10px var(--color-bingo);
+  animation: winning-pulse 1.2s ease-in-out infinite alternate;
+}
+
+/* Free space */
+.cyber-square:disabled {
+  cursor: default;
+  background: linear-gradient(135deg, rgba(0, 255, 247, 0.12) 0%, rgba(245, 0, 245, 0.1) 100%);
+  border-color: rgba(0, 255, 247, 0.5);
+  box-shadow: 0 0 12px 2px rgba(0, 255, 247, 0.2);
+  color: var(--color-accent);
+  font-weight: 700;
+  text-shadow: 0 0 10px var(--color-glow);
+}
+
+@keyframes winning-pulse {
+  0% {
+    box-shadow: 0 0 20px 5px rgba(255, 0, 234, 0.5), 0 0 40px 10px rgba(0, 255, 247, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 28px 8px rgba(255, 0, 234, 0.7), 0 0 56px 16px rgba(0, 255, 247, 0.35);
+  }
+}
+
+/* Modal enter animation */
+@keyframes cyber-modal-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(20px);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Title shimmer */
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow: 0 0 12px var(--color-glow-alt), 0 0 24px var(--color-glow-alt), 0 0 48px var(--color-bingo);
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+.neon-title {
+  animation: neon-flicker 4s ease-in-out infinite;
 }
 
 .cyber-square {
